@@ -204,3 +204,32 @@ footer {
     justify-content: center;
     margin: 15px 0;
 }
+
+/* By default, hide the mobile ad (for PC view) */
+.mobile-ad {
+    display: none;
+}
+
+/* By default, show the desktop ad */
+.desktop-ad {
+    display: block;
+    text-align: center;
+}
+
+/* MOBILE FIX: When screen is smaller than 768px */
+@media (max-width: 768px) {
+    .desktop-ad {
+        display: none; /* Hide the big PC banner */
+    }
+    .mobile-ad {
+        display: block; /* Show the small mobile banner */
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Prevent any accidental overflow */
+    body, html {
+        overflow-x: hidden;
+        width: 100%;
+    }
+}
