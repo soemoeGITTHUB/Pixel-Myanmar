@@ -196,3 +196,11 @@ footer {
     color: var(--text-dim);
     font-size: 0.8rem;
 }
+.ad-placeholder {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden; /* This prevents ads from pushing the page to the side */
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
