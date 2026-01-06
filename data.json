@@ -1,0 +1,26 @@
+[
+    {
+        "id": "cinematic-v1",
+        "title": "Cinematic Vlog LUTs v1",
+        "category": "CapCut",
+        "thumb": "assets/thumb1.jpg",
+        "description": "Premium cinematic look for Myanmar vloggers.",
+        "downloadUrl": "https://mediafire.com/your-link-1"
+    },
+    {
+        "id": "glitch-transitions",
+        "title": "Ultimate Glitch Pack",
+        "category": "All Editors",
+        "thumb": "assets/thumb2.jpg",
+        "description": "High energy transitions for gaming videos.",
+        "downloadUrl": "https://mediafire.com/your-link-2"
+    },
+    {
+    "id": "urban-overlay-01",
+    "title": "Urban Texture Overlays",
+    "category": "Premiere Pro",
+    "thumb": "assets/my-new-pack.jpg",
+    "description": "High-quality 4K urban textures for gritty music videos.",
+    "downloadUrl": "https://www.mediafire.com/file/your-link-here"
+}
+]
