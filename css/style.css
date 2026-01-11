@@ -233,3 +233,153 @@ footer {
         width: 100%;
     }
 }
+
+
+.category-bar {
+    display: flex;
+    overflow-x: auto; /* Allows swiping left/right on mobile */
+    gap: 12px;
+    padding: 15px 5px;
+    white-space: nowrap; /* Prevents buttons from jumping to the next line */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling for iPhone */
+    scrollbar-width: none; /* Hides ugly scrollbar on Firefox */
+}
+
+/* Hides scrollbar for Chrome/Safari */
+.category-bar::-webkit-scrollbar {
+    display: none; 
+}
+
+.filter-btn {
+    background: #1e293b; /* Dark card color */
+    color: #94a3b8; /* Dimmed text */
+    border: 1px solid #334155;
+    padding: 8px 22px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.filter-btn.active {
+    background: #334ee7; /* Your Blue color */
+    color: white;
+    border-color: #334ee7;
+    box-shadow: 0 4px 10px rgba(51, 78, 231, 0.3);
+}
+
+.category-bar {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 20px 0; /* Add more padding to push the grid down */
+    margin-bottom: 10px; /* Force space between bar and grid */
+    position: relative; /* Ensures it stays in the normal document flow */
+    z-index: 10; /* Keeps it "above" the cards visually */
+    width: 100%;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure the grid doesn't overlap */
+.movie-grid, .pack-grid {
+    clear: both; /* Prevents floating elements from overlapping */
+    display: grid;
+    margin-top: 10px;
+}
+
+
+
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 40px 0;
+}
+
+.page-btn {
+    background: #161e2e;
+    color: white;
+    border: 1px solid #334155;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.page-btn:hover {
+    border-color: #334ee7;
+}
+
+/* The style for the active/current page number */
+.page-number.active {
+    background: #334ee7;
+    border-color: #334ee7;
+}
+
+.page-number {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: #161e2e;
+    cursor: pointer;
+    border: 1px solid #334155;
+}
+
+
+/* --- New Episode Grid Styling --- */
+.episode-grid {
+    display: grid;
+    /* This creates the grid: 3-4 buttons per row on mobile, more on PC */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    margin: 25px 0;
+    width: 100%;
+}
+
+.episode-btn {
+    display: block;
+    width: 100%;
+    background: #1e293b; /* Matches your card color */
+    color: #ffffff;
+    padding: 12px 5px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #334155;
+    cursor: pointer;
+    text-decoration: none;
+    transition: 0.3s ease;
+}
+
+/* State: While the 10s timer is running */
+.episode-btn.loading {
+    background: #161e2e;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-style: dashed;
+}
+
+/* State: When timer hits 0 and it becomes a Download Link */
+.episode-btn.download-ready {
+    background: #334ee7; /* Your primary blue */
+    border-color: #334ee7;
+    box-shadow: 0 0 15px rgba(51, 78, 231, 0.4);
+}
+
+/* Single Download Area Fix */
+#single-download-area {
+    margin-top: 20px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+
+

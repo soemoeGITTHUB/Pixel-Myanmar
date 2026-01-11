@@ -32,8 +32,17 @@
             <input type="text" id="searchInput" placeholder="Search for LUTS, Transitions, Overlays...">
         </div>
     </section>
-
+   
     <main class="container">
+         <div class="category-bar">
+    <button class="filter-btn active" onclick="filterMovies('All')">All</button>
+    <button class="filter-btn" onclick="filterMovies('Hollywood')">Hollywood</button>
+    <button class="filter-btn" onclick="filterMovies('Bollywood')">Bollywood</button>
+    <button class="filter-btn" onclick="filterMovies('Korean')">Korean</button>
+    <button class="filter-btn" onclick="filterMovies('Japanese')">Japanese</button>
+    <button class="filter-btn" onclick="filterMovies('Chinese')">Chinese</button>
+    <button class="filter-btn" onclick="filterMovies('Thai')">Thai</button>
+</div>
         <h2 class="section-title">Latest Releases</h2>
         <div class="pack-grid">
 
@@ -51,6 +60,12 @@
 
         </div>
     </main>
+    <div class="pagination-container">
+    <button class="page-btn" onclick="changePage('prev')">« Prev</button>
+    <div id="page-numbers">
+        </div>
+    <button class="page-btn" onclick="changePage('next')">Next »</button>
+</div>
 
     <footer>
         <p>&copy; 2024 PixelMyanmar. Built for Creators. Owned by (Ospyne Limited)</p>
