@@ -62,7 +62,7 @@ function displayItems(itemsToShow) {
             <div class="thumbnail"><img src="${item.thumb || item.thumbnail || 'assets/default.jpg'}" loading="lazy"></div>
             <div class="pack-info">
                 <h3>${item.title}</h3>
-                <a href="download-page.html?id=${item.id}" class="download-btn">View Content</a>
+                <a href="download-page.html?id=${item.id}" class="download-btn">▶ Watch and Download</a>
             </div>
         </div>
     `).join('');
