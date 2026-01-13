@@ -2,27 +2,34 @@ let allItems = [];
 let currentPage = 1;
 const itemsPerPage = 12;
 
+// --- AUTOMATION SETUP ---
+// 1. In Google Sheets: File > Share > Publish to web
+// 2. Select 'Entire Document' and 'Comma-separated values (.csv)'
+// 3. Copy that link and paste it below:
+const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSERPcsfkyc_jZKubDvGZW3tPjmMB6ddmyA6S1c3r9BT0j5jVT2qH-MsBKf99lUs-psP0l7J0F7T7rU/pub?output=csv';
+
 document.addEventListener("DOMContentLoaded", () => {
     const packGrid = document.querySelector('.pack-grid') || document.getElementById('movie-grid');
     const searchInput = document.getElementById('searchInput');
 
-    fetch('data.json')
-        .then(res => res.json())
-        .then(data => {
-            allItems = data;
+    // Fetching from Google Sheets instead of data.json
+    fetch(sheetUrl)
+        .then(res => res.text())
+        .then(csvText => {
+            allItems = parseCSV(csvText);
+            
             if (packGrid) displayItems(allItems);
             if (document.getElementById('download-page-marker') || document.getElementById('timer') || document.getElementById('episodes-container')) {
                 initDownloadPage();
             }
         })
-        .catch(err => console.error("Error loading JSON:", err));
+        .catch(err => console.error("Error loading Spreadsheet Data:", err));
 
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentPage = 1;
             const term = e.target.value.toLowerCase();
             const filtered = allItems.filter(item => {
-                // Safety check: ensure category and title exist before using toLowerCase
                 const title = (item.title || "").toLowerCase();
                 const cat = (item.category || "").toLowerCase();
                 return title.includes(term) || cat.includes(term);
@@ -32,12 +39,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// --- NEW: Category Filter Function ---
-// This connects your HTML buttons to the filtering logic
+// Helper Function: Converts Google Sheets CSV into a format JavaScript understands
+function parseCSV(csv) {
+    const lines = csv.split('\n').filter(line => line.trim() !== "");
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    return lines.slice(1).map(line => {
+        // Regex to handle commas inside quotes (like in descriptions)
+        const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        const obj = {};
+        headers.forEach((header, i) => {
+            let val = values[i] ? values[i].replace(/^"|"$/g, "").trim() : "";
+            obj[header] = val;
+        });
+        return obj;
+    });
+}
+
 window.filterMovies = function(categoryName) {
     currentPage = 1;
-    
-    // Update UI: Remove active class from all buttons and add to clicked one
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
 
@@ -75,7 +95,7 @@ function renderPagination(totalItems, currentList) {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     container.innerHTML = '';
     
-    if (totalPages <= 1) return; // Hide pagination if only 1 page
+    if (totalPages <= 1) return;
 
     for (let i = 1; i <= totalPages; i++) {
         const span = document.createElement('span');
@@ -105,11 +125,17 @@ function initDownloadPage() {
     const epContainer = document.getElementById('episodes-container');
     const singleContainer = document.getElementById('single-download-area');
 
-    // Check if it has an episodes array AND the array is not empty
-    if (pack.episodes && pack.episodes.length > 0 && epContainer) {
+    // CSV Episode Logic: Detects if the cell contains the ":" symbol
+    if (pack.episodes && pack.episodes.includes(':') && epContainer) {
         if(singleContainer) singleContainer.style.display = 'none';
         
-        epContainer.innerHTML = pack.episodes.map((ep, index) => `
+        // Split the CSV string "EP 1:url | EP 2:url" into an array
+        const epList = pack.episodes.split('|').map(entry => {
+            const [name, url] = entry.split(':');
+            return { name: name.trim(), url: url.trim() };
+        });
+
+        epContainer.innerHTML = epList.map((ep, index) => `
             <div class="ep-wrapper" id="wrapper-${index}">
                 <button class="episode-btn" onclick="handleEpisodeClick(${index}, '${ep.url}')">
                     ${ep.name}
@@ -117,7 +143,6 @@ function initDownloadPage() {
             </div>
         `).join('');
     } else {
-        // Hide episodes grid if it's a single movie
         if(epContainer) epContainer.style.display = 'none';
         if(singleContainer) singleContainer.style.display = 'block';
         startSingleTimer(pack.downloadUrl || "#");
