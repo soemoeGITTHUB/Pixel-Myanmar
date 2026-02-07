@@ -557,3 +557,36 @@ footer {
     right: 0;
     background: linear-gradient(to left, var(--bg), transparent);
 }
+.external-nav-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 15px 0;
+    padding: 10px;
+    background: #111;
+    border-radius: 8px;
+}
+
+.nav-btn {
+    background: #e50914; /* Theme Red */
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-btn:disabled {
+    background: #333;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.ep-info {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+}

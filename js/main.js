@@ -142,23 +142,39 @@ function renderPagination(totalItems, currentList) {
 }
 
 // --- DOWNLOAD PAGE & EPISODES ---
+// --- GLOBAL VARIABLES (Keep these at the top of your file) ---
+let currentEpIndex = 0;
+let currentEpisodeList = [];
+
+// --- DOWNLOAD PAGE LOGIC ---
 function initDownloadPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const packId = urlParams.get('id');
+    
+    // Safety check for ID comparison (string vs number)
     const pack = allItems.find(p => String(p.id) === String(packId));
-    if (!pack) return;
+    if (!pack) {
+        console.error("Movie/Series not found!");
+        return;
+    }
 
+    // 1. SET METADATA (Title & Description)
     document.querySelector('h1').textContent = pack.title;
     const desc = document.querySelector('.description p');
     if(desc) desc.textContent = pack.description || "No description available.";
 
+    // Target UI elements
     const epContainer = document.getElementById('episodes-container');
-    const singleContainer = document.getElementById('single-download-area');
+    const singleArea = document.getElementById('single-download-area');
+    const navContainer = document.getElementById('player-navigation');
 
-    if (pack.episodes && pack.episodes.includes(':') && epContainer) {
-        if(singleContainer) singleContainer.style.display = 'none';
+    // 2. SERIES LOGIC (Check if 'episodes' column has content)
+    if (pack.episodes && pack.episodes.includes(':')) {
+        if(singleArea) singleArea.style.display = 'none';
+        if(navContainer) navContainer.style.display = 'flex'; // Show Next/Prev
 
-        const epList = pack.episodes.split('|').map(entry => {
+        // Parse the Episode String (Format: Name:Link|Name:Link)
+        currentEpisodeList = pack.episodes.split('|').map(entry => {
             const firstColon = entry.indexOf(':');
             return { 
                 name: entry.substring(0, firstColon).trim(), 
@@ -166,42 +182,109 @@ function initDownloadPage() {
             };
         });
 
-        epContainer.innerHTML = epList.map((ep, index) => `
+        // Generate Episode Grid Buttons
+        epContainer.innerHTML = currentEpisodeList.map((ep, index) => `
             <div class="ep-wrapper" id="wrapper-${index}">
-                <button class="episode-btn" onclick="handleEpisodeClick(${index}, '${ep.url}')">
+                <button class="episode-btn" onclick="handleEpisodeClick(${index}, '${ep.url}', '${ep.name}')">
                     ${ep.name}
                 </button>
             </div>
         `).join('');
+
+        // Automatically Load and Play the First Episode
+        handleEpisodeClick(0, currentEpisodeList[0].url, currentEpisodeList[0].name);
+
     } else {
+        // 3. SINGLE MOVIE LOGIC
+        if(navContainer) navContainer.style.display = 'none'; // Hide Next/Prev
         if(epContainer) epContainer.style.display = 'none';
-        if(singleContainer) {
-            singleContainer.style.display = 'block';
-            startSingleTimer(pack.downloadUrl || pack.episodes || "#");
-        }
+        if(singleArea) singleArea.style.display = 'block';
+
+        // --- THE SMART FALLBACK ---
+        // Checks streamUrl first. If empty, uses downloadurl.
+        const finalLink = pack.streamUrl || pack.downloadurl || "#";
+        
+        updateVideoPlayer(finalLink);
+        startSingleTimer(finalLink);
     }
 }
 
-window.handleEpisodeClick = function(index, url) {
-    const wrapper = document.getElementById(`wrapper-${index}`);
-    let timeLeft = 10;
-    wrapper.innerHTML = `<button class="episode-btn loading" disabled>Wait <span id="time-${index}">10</span>s</button>`;
+// HANDLER: When an episode button or "Next/Prev" is clicked
+window.handleEpisodeClick = function(index, url, name) {
+    currentEpIndex = index;
+    
+    // Update the video player
+    updateVideoPlayer(url);
+    
+    // Refresh the Next/Prev button states (External Nav)
+    renderNavUI(); 
 
-    const countdown = setInterval(() => {
-        timeLeft--;
-        const timerSpan = document.getElementById(`time-${index}`);
-        if(timerSpan) timerSpan.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            wrapper.innerHTML = `<a href="${url}" class="episode-btn download-ready" target="_blank">Download Now</a>`;
-        }
-    }, 1000);
+    // Update the specific episode button below to show the timer
+    const wrapper = document.getElementById(`wrapper-${index}`);
+    if (wrapper) {
+        let timeLeft = 10;
+        wrapper.innerHTML = `<button class="episode-btn loading" disabled>Wait ${timeLeft}s</button>`;
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            const btn = wrapper.querySelector('button');
+            if(btn) btn.textContent = `Wait ${timeLeft}s`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                wrapper.innerHTML = `<a href="${url}" class="episode-btn download-ready" target="_blank">Download ${name}</a>`;
+            }
+        }, 1000);
+    }
 };
 
+// HELPER: Renders the External Next/Prev buttons
+function renderNavUI() {
+    const nav = document.getElementById('player-navigation');
+    if (!nav) return;
+    
+    nav.innerHTML = `
+        <button class="nav-btn" onclick="changeEp(-1)" ${currentEpIndex === 0 ? 'disabled' : ''}>❮ Previous</button>
+        <span class="ep-info">Playing: ${currentEpisodeList[currentEpIndex].name}</span>
+        <button class="nav-btn" onclick="changeEp(1)" ${currentEpIndex === currentEpisodeList.length - 1 ? 'disabled' : ''}>Next ❯</button>
+    `;
+}
+
+// HELPER: Logical step for Next/Prev
+window.changeEp = function(direction) {
+    const newIndex = currentEpIndex + direction;
+    if (newIndex >= 0 && newIndex < currentEpisodeList.length) {
+        const ep = currentEpisodeList[newIndex];
+        handleEpisodeClick(newIndex, ep.url, ep.name);
+    }
+};
+
+// HELPER: Updates the player HTML
+function updateVideoPlayer(url) {
+    const placeholder = document.getElementById('video-placeholder');
+    if (!placeholder) return;
+
+    if (url === "#") {
+        placeholder.innerHTML = `<div style="padding:50px; color:gray;">No video link available.</div>`;
+        return;
+    }
+
+    // Detect Embed vs Direct Video
+    if (url.includes('embed') || url.includes('drive.google.com') || url.includes('youtube.com')) {
+        placeholder.innerHTML = `<iframe src="${url}" frameborder="0" allowfullscreen width="100%" height="100%" style="border-radius:12px; background:#000;"></iframe>`;
+    } else {
+        placeholder.innerHTML = `
+            <video controls autoplay width="100%" style="max-height:450px; border-radius:12px; background:#000;">
+                <source src="${url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>`;
+    }
+}
+
+// HANDLER: Timer for Single Movie download button
 function startSingleTimer(url) {
     const timerElement = document.getElementById('timer');
     const downloadLink = document.getElementById('download-link');
-    const waitMessage = document.getElementById('wait-message');
     if (!timerElement) return;
 
     let timeLeft = 10;
@@ -210,11 +293,12 @@ function startSingleTimer(url) {
         timerElement.textContent = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(countdown);
-            if(waitMessage) waitMessage.style.display = 'none';
             if(downloadLink) {
                 downloadLink.classList.remove('hidden');
                 downloadLink.href = url;
             }
+            const waitMsg = document.getElementById('wait-message');
+            if(waitMsg) waitMsg.style.display = 'none';
         }
     }, 1000);
 }
