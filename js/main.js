@@ -1,30 +1,39 @@
+// 1. GLOBAL VARIABLES
 let allItems = [];
 let currentPage = 1;
 const itemsPerPage = 12;
 
-// --- AUTOMATION SETUP ---
-// 1. In Google Sheets: File > Share > Publish to web
-// 2. Select 'Entire Document' and 'Comma-separated values (.csv)'
-// 3. Copy that link and paste it below:
 const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSERPcsfkyc_jZKubDvGZW3tPjmMB6ddmyA6S1c3r9BT0j5jVT2qH-MsBKf99lUs-psP0l7J0F7T7rU/pub?output=csv';
 
+// 2. CORE INITIALIZATION
 document.addEventListener("DOMContentLoaded", () => {
     const packGrid = document.querySelector('.pack-grid') || document.getElementById('movie-grid');
     const searchInput = document.getElementById('searchInput');
 
-    // Fetching from Google Sheets instead of data.json
+    // Fetch from Google Sheets
     fetch(sheetUrl)
         .then(res => res.text())
         .then(csvText => {
             allItems = parseCSV(csvText);
             
-            if (packGrid) displayItems(allItems);
-            if (document.getElementById('download-page-marker') || document.getElementById('timer') || document.getElementById('episodes-container')) {
+            // Homepage logic
+            if (packGrid) {
+                displayItems(allItems);
+            }
+            
+            // Marquee Carousel logic
+            if (document.getElementById('carousel-track')) {
+                initCarousel(allItems);
+            }
+
+            // Download Page logic
+            if (document.getElementById('timer') || document.getElementById('episodes-container')) {
                 initDownloadPage();
             }
         })
         .catch(err => console.error("Error loading Spreadsheet Data:", err));
 
+    // Search logic
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentPage = 1;
@@ -39,13 +48,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Helper Function: Converts Google Sheets CSV into a format JavaScript understands
+// --- HELPER: CSV PARSER ---
 function parseCSV(csv) {
     const lines = csv.split('\n').filter(line => line.trim() !== "");
     const headers = lines[0].split(',').map(h => h.trim());
     
     return lines.slice(1).map(line => {
-        // Regex to handle commas inside quotes (like in descriptions)
         const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
         const obj = {};
         headers.forEach((header, i) => {
@@ -56,22 +64,45 @@ function parseCSV(csv) {
     });
 }
 
+// --- RESTORED: CATEGORY FILTER ---
 window.filterMovies = function(categoryName) {
     currentPage = 1;
+    
+    // Update active button UI
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
 
     const filtered = (categoryName === 'All') 
         ? allItems 
         : allItems.filter(item => item.category === categoryName);
-    
+
     displayItems(filtered);
 };
 
+// --- MARQUEE CAROUSEL LOGIC ---
+function initCarousel(data) {
+    const track = document.getElementById('carousel-track');
+    if (!track || data.length === 0) return;
+
+    // Pick 10 movies for the marquee
+    const featured = [...data].slice(0, 10);
+    // Duplicate for seamless loop
+    const marqueeItems = [...featured, ...featured];
+
+    track.innerHTML = marqueeItems.map(movie => `
+        <div class="carousel-slide">
+            <a href="download-page.html?id=${movie.id}">
+                <img src="${movie.thumb || movie.thumbnail || 'assets/default.jpg'}" alt="${movie.title}">
+            </a>
+        </div>
+    `).join('');
+}
+
+// --- DISPLAY & PAGINATION ---
 function displayItems(itemsToShow) {
     const grid = document.querySelector('.pack-grid') || document.getElementById('movie-grid');
     if (!grid) return;
-    
+
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const paginatedItems = itemsToShow.slice(startIndex, endIndex);
@@ -94,7 +125,7 @@ function renderPagination(totalItems, currentList) {
     if (!container) return;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     container.innerHTML = '';
-    
+
     if (totalPages <= 1) return;
 
     for (let i = 1; i <= totalPages; i++) {
@@ -110,12 +141,11 @@ function renderPagination(totalItems, currentList) {
     }
 }
 
-// --- DOWNLOAD PAGE LOGIC ---
-
+// --- DOWNLOAD PAGE & EPISODES ---
 function initDownloadPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const packId = urlParams.get('id');
-    const pack = allItems.find(p => p.id === packId);
+    const pack = allItems.find(p => String(p.id) === String(packId));
     if (!pack) return;
 
     document.querySelector('h1').textContent = pack.title;
@@ -125,14 +155,15 @@ function initDownloadPage() {
     const epContainer = document.getElementById('episodes-container');
     const singleContainer = document.getElementById('single-download-area');
 
-    // CSV Episode Logic: Detects if the cell contains the ":" symbol
     if (pack.episodes && pack.episodes.includes(':') && epContainer) {
         if(singleContainer) singleContainer.style.display = 'none';
-        
-        // Split the CSV string "EP 1:url | EP 2:url" into an array
+
         const epList = pack.episodes.split('|').map(entry => {
-            const [name, url] = entry.split(':');
-            return { name: name.trim(), url: url.trim() };
+            const firstColon = entry.indexOf(':');
+            return { 
+                name: entry.substring(0, firstColon).trim(), 
+                url: entry.substring(firstColon + 1).trim() 
+            };
         });
 
         epContainer.innerHTML = epList.map((ep, index) => `
@@ -144,22 +175,22 @@ function initDownloadPage() {
         `).join('');
     } else {
         if(epContainer) epContainer.style.display = 'none';
-        if(singleContainer) singleContainer.style.display = 'block';
-        startSingleTimer(pack.downloadUrl || "#");
+        if(singleContainer) {
+            singleContainer.style.display = 'block';
+            startSingleTimer(pack.downloadUrl || pack.episodes || "#");
+        }
     }
 }
 
 window.handleEpisodeClick = function(index, url) {
     const wrapper = document.getElementById(`wrapper-${index}`);
     let timeLeft = 10;
-    
     wrapper.innerHTML = `<button class="episode-btn loading" disabled>Wait <span id="time-${index}">10</span>s</button>`;
-    
+
     const countdown = setInterval(() => {
         timeLeft--;
         const timerSpan = document.getElementById(`time-${index}`);
         if(timerSpan) timerSpan.textContent = timeLeft;
-
         if (timeLeft <= 0) {
             clearInterval(countdown);
             wrapper.innerHTML = `<a href="${url}" class="episode-btn download-ready" target="_blank">Download Now</a>`;

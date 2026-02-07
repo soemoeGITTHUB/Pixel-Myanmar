@@ -383,3 +383,177 @@ footer {
 
 
 
+.video-player-container {
+    width: 100%;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0;
+}
+
+.video-wrapper iframe, 
+.video-wrapper video,
+.video-wrapper #video-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.suggestions {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid #1e293b;
+}
+
+.section-title {
+    margin-bottom: 30px;
+    font-size: 1.5rem;
+}
+
+
+/* The Grid Container */
+.pack-grid {
+    display: grid;
+    gap: 15px; /* Space between cards */
+    padding: 15px;
+    /* This creates 2 columns on mobile and up to 4 or 5 on desktop */
+    grid-template-columns: repeat(2, 1fr); 
+}
+
+/* Desktop Adjustment */
+@media (min-width: 768px) {
+    .pack-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+/* Make the Card smaller and cleaner */
+.pack-card {
+    background: #1a1a1a;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.pack-card .thumbnail img {
+    width: 100%;
+    aspect-ratio: 2/3; /* Standard movie poster ratio */
+    object-fit: cover;
+}
+
+.pack-info {
+    padding: 10px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.pack-info h3 {
+    font-size: 0.9rem; /* Smaller text for 2-column layout */
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limits title to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.download-btn {
+    font-size: 0.8rem;
+    padding: 8px;
+    text-align: center;
+}
+.pack-card .thumbnail img {
+    width: 100%;
+    aspect-ratio: 2/3; /* Change to 16/9 for wide thumbnails */
+    object-fit: cover;
+    display: block; /* Removes tiny gaps at the bottom */
+}
+/* 1. The Container (The Window) */
+.carousel-container {
+    width: 100%;
+    height: 260px; /* Fixed height ensures it's never 'hidden' at 0px */
+    overflow: hidden; /* Hides cards as they leave the screen */
+    position: relative;
+    margin: 20px 0;
+    background: transparent;
+    flex-shrink: 0; /* Prevents the body's flex layout from squashing it */
+    display: block !important;
+}
+
+/* 2. The Scrolling Track (The moving row) */
+#carousel-track {
+    display: flex;
+    gap: 15px; 
+    width: max-content; /* Critical: allows cards to stay in one long line */
+    padding: 15px;
+    animation: scrollMarquee 40s linear infinite; /* Smooth continuous loop */
+}
+
+/* Pause the marquee when user hovers */
+.carousel-container:hover #carousel-track {
+    animation-play-state: paused;
+}
+
+/* 3. Individual Movie Cards in the Marquee */
+.carousel-slide {
+    width: 150px; 
+    height: 220px;
+    flex-shrink: 0; /* Ensures cards don't get squeezed */
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    border: 1px solid #334155;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+/* Pop effect on hover */
+.carousel-slide:hover img {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+/* 4. The Loop Animation */
+@keyframes scrollMarquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } /* Moves halfway (assumes duplicated list) */
+}
+
+/* 5. Professional Edge Fading (Gradients) */
+.carousel-container::before,
+.carousel-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none; /* Allows clicking through the shadows */
+}
+
+.carousel-container::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg), transparent);
+}
+
+.carousel-container::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg), transparent);
+}
